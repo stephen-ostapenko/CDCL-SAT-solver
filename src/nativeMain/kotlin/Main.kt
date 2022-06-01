@@ -36,8 +36,8 @@ fun BCP(f: Formula, state: State, level: Int): Boolean {
     }
 
     return f.all { clauseHasUnassignedVars(it, state) || it.any { literal ->
-        state.get(literal.variable)?.value == literal.hasNegation }
-    }
+        state.get(literal.variable)?.value == literal.hasNegation
+    }}
 }
 
 fun decideNewValue(f: Formula, state: State, level: Int) {
@@ -48,15 +48,48 @@ fun decideNewValue(f: Formula, state: State, level: Int) {
             score[literal] = newScore
         }
     }
+
     val (decidedLiteral, _) = score.maxByOrNull { (_, score) -> score } ?: return
     state[decidedLiteral.variable] = VariableInfo(!decidedLiteral.hasNegation, null, level)
 }
 
+fun goBack(f: Formula, state: State, newLevel: Int): State {
+    return state.filter { (_, info) -> (info.level <= newLevel) }.toMutableMap()
+}
+
+fun oneLiteralAtLevel(clause: Clause, state: State, level: Int): Boolean {
+    return clause.count { state.get(it.variable)?.level == level } == 1
+}
+
+fun resolve(clause1: Clause, clause2: Clause, v: String): Clause {
+    return (clause1 + clause2).filter { it.variable != v }
+}
+
+fun analyzeConflict(f: Formula, state: State, level: Int): Pair<Int, Clause> {
+    if (level == 0) {
+        return Pair(-1, listOf())
+    }
+    var currentClause = f.find { !clauseHasUnassignedVars(it, state) && it.all { literal ->
+        state.get(literal.variable)?.value != literal.hasNegation
+    }} ?: throw IllegalArgumentException()
+
+    while (!oneLiteralAtLevel(currentClause, state, level)) {
+        val selectedLiteral = currentClause.find { literal -> state.get(literal.variable)?.level == level } ?: throw IllegalArgumentException()
+        val previousClauseIndex = state.get(selectedLiteral.variable)?.antecedent ?: throw IllegalArgumentException()
+        currentClause = resolve(f[previousClauseIndex], currentClause, selectedLiteral.variable)
+    }
+
+    val newLevel = currentClause.map { state.get(it.variable)?.level ?: 0 }.maxByOrNull {
+        if (it == level) 0 else it
+    } ?: -1
+    return Pair(newLevel, currentClause)
+}
+
 fun CDCL(f: Formula): Pair<Boolean, State> {
-    val state = mutableMapOf<String, VariableInfo>()
+    var state = mutableMapOf<String, VariableInfo>()
     val allVars = getAllVars(f)
     if (!BCP(f, state, 0)) {
-        return Pair(false, mutableMapOf<String, VariableInfo>())
+        return Pair(false, mutableMapOf())
     }
 
     var level = 0
@@ -64,14 +97,14 @@ fun CDCL(f: Formula): Pair<Boolean, State> {
         level++
         decideNewValue(f, state, level)
         while (BCP(f, state, level) == false) {
-            /*(backLevel, learntClause) = analyzeConflict()
+            val (backLevel, learntClause) = analyzeConflict(f, state, level)
             f.add(learntClause)
             if (backLevel < 0) {
-                return Pair(false, mutableMapOf<String, VariableInfo>())
+                return Pair(false, mutableMapOf())
             } else {
-                goBack(f, state, backLevel)
+                state = goBack(f, state, backLevel)
                 level = backLevel
-            }*/
+            }
         }
     }
     return Pair(true, state)
