@@ -1,5 +1,7 @@
 package mkn.mathlog
 
+import com.github.ajalt.clikt.core.NoSuchParameter
+import com.github.ajalt.clikt.core.PrintHelpMessage
 import mkn.mathlog.utils.CLArguments
 import mkn.mathlog.utils.DIMACSParser
 import mkn.mathlog.utils.FileInput
@@ -119,7 +121,18 @@ fun runCDCLSolver(f: Formula): Pair<Boolean, State> {
 fun main(args: Array<String>) {
     try {
         val arguments = CLArguments()
-        arguments.parse(args)
+        try {
+            arguments.parse(args)
+        } catch (e: PrintHelpMessage) {
+            println(arguments.getFormattedHelp())
+            return
+        } catch (e: NoSuchParameter) {
+            println("${e.message}\n")
+            println("Usage: sat-solver [OPTIONS]")
+            println("Run `sat-solver -h` for more information")
+            return
+        }
+
         val inputFilePath = arguments.inputFile
 
         val inputText = if (inputFilePath != null) {
