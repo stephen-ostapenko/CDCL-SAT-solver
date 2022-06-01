@@ -11,6 +11,7 @@ data class Literal(val variableName: VarNameType, val hasNegation: Boolean)
 
 typealias Clause = List<Literal>
 typealias Formula = MutableList<Clause>
+typealias State = MutableMap<String, VariableInfo>
 
 data class VariableInfo(var value: Boolean, val antecedent: Int?, val level: Int)
 typealias State = MutableMap<VarNameType, VariableInfo>
