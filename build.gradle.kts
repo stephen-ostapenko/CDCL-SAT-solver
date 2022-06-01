@@ -26,7 +26,7 @@ kotlin {
     nativeTarget.apply {
         binaries {
             executable("sat-solver") {
-                entryPoint = "main"
+                entryPoint = "$group.main"
             }
         }
     }
@@ -36,6 +36,7 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib-common:1.6.20")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+                implementation("com.github.ajalt.clikt:clikt:3.4.0")
             }
         }
         val nativeMain by getting

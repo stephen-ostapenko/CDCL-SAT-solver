@@ -1,12 +1,19 @@
-data class Literal(val variable: String, val hasNegation: Boolean)
+package mkn.mathlog
+
+import mkn.mathlog.utils.CLArguments
+import mkn.mathlog.utils.DIMACSParser
+import mkn.mathlog.utils.FileInput
+
+typealias VarNameType = Int
+data class Literal(val variable: VarNameType, val hasNegation: Boolean)
 typealias Clause = List<Literal>
 typealias Formula = MutableList<Clause>
 typealias State = MutableMap<String, VariableInfo>
 
 data class VariableInfo(var value: Boolean, val antecedent: Int?, val level: Int)
 
-fun getAllVars(f: Formula): List<String> {
-    val vars: MutableList<String> = mutableListOf<String>()
+fun getAllVars(f: Formula): List<VarNameType> {
+    val vars = mutableListOf<VarNameType>()
     for (clause in f) {
         for (literal in clause) {
             vars.add(literal.variable)
@@ -15,7 +22,7 @@ fun getAllVars(f: Formula): List<String> {
     return vars.toList()
 }
 
-fun hasUnassignedVars(allVars: List<String>, state: State): Boolean {
+fun hasUnassignedVars(allVars: List<VarNameType>, state: State): Boolean {
     return state.size < allVars.size
 }
 
@@ -52,9 +59,33 @@ fun CDCL(f: Formula): Pair<Boolean, State> {
     return Pair(true, values)
 }
 
-@Suppress("OPT_IN_IS_NOT_ENABLED")
-@OptIn(ExperimentalStdlibApi::class)
-fun main() {
-    println("Hello, Kotlin/Native!")
-    println(isExperimentalMM())
+fun main(args: Array<String>) {
+    try {
+        val arguments = CLArguments()
+        arguments.parse(args)
+        val inputFilePath = arguments.inputFile
+
+        val inputText = if (inputFilePath != null) {
+            FileInput(inputFilePath).readAllText()
+        } else {
+            var line = readLine()
+            val lines = mutableListOf<String>()
+
+            while (line != null) {
+                lines.add(line)
+                line = readLine()
+            }
+
+            lines.joinToString("\n")
+        }
+
+        val formula = DIMACSParser.getFormula(inputText)
+
+        formula.forEach {
+            println(it)
+        }
+
+    } catch (e: Exception) {
+        println(e.message)
+    }
 }
