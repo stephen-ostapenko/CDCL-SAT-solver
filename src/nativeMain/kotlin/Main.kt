@@ -22,6 +22,9 @@ fun BCP(f: Formula, state: State, level: Int): Boolean {
     while (true) {
         var foundUnitClause = false
         for ((id, clause) in f.withIndex()) {
+            if (clause.any { literal -> !literal.hasNegation == state.get(literal.variable)?.value }) {
+                continue
+            }
             val unresolvedLiterals = clause.filter { !state.containsKey(it.variable) }
             if (unresolvedLiterals.size == 1) {
                 foundUnitClause = true
@@ -59,7 +62,7 @@ fun oneLiteralAtLevel(clause: Clause, state: State, level: Int): Boolean =
     clause.count { state.get(it.variable)?.level == level } == 1
 
 fun resolve(clause1: Clause, clause2: Clause, v: VarNameType): Clause =
-    (clause1 + clause2).filter { it.variable != v }
+    (clause1 + clause2).filter { it.variable != v }.distinct()
 
 fun analyzeConflict(f: Formula, state: State, level: Int): Pair<Int, Clause> {
     if (level == 0) {
@@ -70,14 +73,15 @@ fun analyzeConflict(f: Formula, state: State, level: Int): Pair<Int, Clause> {
     }} ?: throw IllegalArgumentException()
 
     while (!oneLiteralAtLevel(currentClause, state, level)) {
-        val selectedLiteral = currentClause.find { literal -> state.get(literal.variable)?.level == level } ?: throw IllegalArgumentException()
+        val selectedLiteral = currentClause.find {
+            literal -> state.get(literal.variable)?.level == level && state.get(literal.variable)?.antecedent != null
+        } ?: break
         val previousClauseIndex = state.get(selectedLiteral.variable)?.antecedent ?: throw IllegalArgumentException()
         currentClause = resolve(f[previousClauseIndex], currentClause, selectedLiteral.variable)
     }
 
-    val newLevel = currentClause.map { state.get(it.variable)?.level ?: 0 }.maxByOrNull {
-        if (it == level) 0 else it
-    } ?: -1
+    val newLevel = currentClause.map { state.get(it.variable)?.level ?: -1 }.filter {it != level}.
+        maxByOrNull { it } ?: -1
     return Pair(newLevel, currentClause)
 }
 
@@ -126,6 +130,15 @@ fun main() {
         listOf(Literal(1, false), Literal(2, false), Literal(3, true)),
         listOf(Literal(1, false), Literal(2, true), Literal(3, false)),
         listOf(Literal(1, false), Literal(2, true), Literal(3, true)),
+        listOf(Literal(1, true), Literal(2, false), Literal(3, false)),
+        listOf(Literal(1, true), Literal(2, false), Literal(3, true)),
+        listOf(Literal(1, true), Literal(2, true), Literal(3, false)),
+        listOf(Literal(1, true), Literal(2, true), Literal(3, true)),
+    )*/
+    /*val f: Formula = mutableListOf(
+        listOf(Literal(1, false), Literal(2, false), Literal(3, false)),
+        listOf(Literal(1, false), Literal(2, false), Literal(3, true)),
+        listOf(Literal(1, false), Literal(2, true), Literal(3, false)),
         listOf(Literal(1, true), Literal(2, false), Literal(3, false)),
         listOf(Literal(1, true), Literal(2, false), Literal(3, true)),
         listOf(Literal(1, true), Literal(2, true), Literal(3, false)),
