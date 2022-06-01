@@ -28,6 +28,9 @@ fun BCP(f: Formula, state: State, level: Int): Boolean {
     while (true) {
         var foundUnitClause = false
         for ((id, clause) in f.withIndex()) {
+            if (clause.any { literal -> !literal.hasNegation == state.get(literal.variableName)?.value }) {
+                continue
+            }
             val unresolvedLiterals = clause.filter { !state.containsKey(it.variableName) }
             if (unresolvedLiterals.size == 1) {
                 foundUnitClause = true
@@ -65,7 +68,7 @@ fun oneLiteralAtLevel(clause: Clause, state: State, level: Int): Boolean =
     clause.count { state.get(it.variableName)?.level == level } == 1
 
 fun resolve(clause1: Clause, clause2: Clause, v: VarNameType): Clause =
-    (clause1 + clause2).filter { it.variableName != v }
+    (clause1 + clause2).filter { it.variableName != v }.distinct()
 
 fun analyzeConflict(f: Formula, state: State, level: Int): Pair<Int, Clause> {
     if (level == 0) {
@@ -76,14 +79,15 @@ fun analyzeConflict(f: Formula, state: State, level: Int): Pair<Int, Clause> {
     }} ?: throw IllegalArgumentException()
 
     while (!oneLiteralAtLevel(currentClause, state, level)) {
-        val selectedLiteral = currentClause.find { literal -> state.get(literal.variableName)?.level == level } ?: throw IllegalArgumentException()
-        val previousClauseIndex = state[selectedLiteral.variableName]?.antecedent ?: throw IllegalArgumentException()
+        val selectedLiteral = currentClause.find {
+            literal -> state.get(literal.variableName)?.level == level && state.get(literal.variableName)?.antecedent != null
+        } ?: break
+        val previousClauseIndex = state.get(selectedLiteral.variableName)?.antecedent ?: throw IllegalArgumentException()
         currentClause = resolve(f[previousClauseIndex], currentClause, selectedLiteral.variableName)
     }
 
-    val newLevel = currentClause.map { state[it.variableName]?.level ?: 0 }.maxByOrNull {
-        if (it == level) 0 else it
-    } ?: -1
+    val newLevel = currentClause.map { state.get(it.variableName)?.level ?: -1 }.filter {it != level}.
+        maxByOrNull { it } ?: -1
     return Pair(newLevel, currentClause)
 }
 
