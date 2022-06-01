@@ -11,22 +11,18 @@ data class Literal(val variableName: VarNameType, val hasNegation: Boolean)
 
 typealias Clause = List<Literal>
 typealias Formula = MutableList<Clause>
-typealias State = MutableMap<String, VariableInfo>
 
 data class VariableInfo(var value: Boolean, val antecedent: Int?, val level: Int)
 typealias State = MutableMap<VarNameType, VariableInfo>
 
-fun getAllVars(f: Formula): List<VarNameType> {
-    return f.flatten().map { it.variableName }.distinct()
-}
+fun getAllVars(f: Formula): List<VarNameType> =
+    f.flatten().map { it.variableName }.distinct()
 
-fun formulaHasUnassignedVars(allVars: List<VarNameType>, state: State): Boolean {
-    return state.size < allVars.size
-}
+fun formulaHasUnassignedVars(allVars: List<VarNameType>, state: State): Boolean =
+    state.size < allVars.size
 
-fun clauseHasUnassignedVars(clause: Clause, state: State): Boolean {
-    return clause.any { !state.containsKey(it.variableName) }
-}
+fun clauseHasUnassignedVars(clause: Clause, state: State): Boolean =
+    clause.any { !state.containsKey(it.variableName) }
 
 fun BCP(f: Formula, state: State, level: Int): Boolean {
     while (true) {
@@ -35,7 +31,7 @@ fun BCP(f: Formula, state: State, level: Int): Boolean {
             val unresolvedLiterals = clause.filter { !state.containsKey(it.variableName) }
             if (unresolvedLiterals.size == 1) {
                 foundUnitClause = true
-                state[unresolvedLiterals.first().variableName] = VariableInfo(unresolvedLiterals.first().hasNegation, id, level)
+                state[unresolvedLiterals.first().variableName] = VariableInfo(!unresolvedLiterals.first().hasNegation, id, level)
             }
         }
 
@@ -45,7 +41,7 @@ fun BCP(f: Formula, state: State, level: Int): Boolean {
     }
 
     return f.all { clauseHasUnassignedVars(it, state) || it.any { literal ->
-        state[literal.variableName]?.value == literal.hasNegation
+        state[literal.variableName]?.value != literal.hasNegation
     }}
 }
 
@@ -62,24 +58,21 @@ fun decideNewValue(f: Formula, state: State, level: Int) {
     state[decidedLiteral.variableName] = VariableInfo(!decidedLiteral.hasNegation, null, level)
 }
 
-fun goBack(f: Formula, state: State, newLevel: Int): State {
-    return state.filter { (_, info) -> (info.level <= newLevel) }.toMutableMap()
-}
+fun goBack(f: Formula, state: State, newLevel: Int): State =
+    state.filter { (_, info) -> (info.level <= newLevel) }.toMutableMap()
 
-fun oneLiteralAtLevel(clause: Clause, state: State, level: Int): Boolean {
-    return clause.count { state.get(it.variableName)?.level == level } == 1
-}
+fun oneLiteralAtLevel(clause: Clause, state: State, level: Int): Boolean =
+    clause.count { state.get(it.variableName)?.level == level } == 1
 
-fun resolve(clause1: Clause, clause2: Clause, v: VarNameType): Clause {
-    return (clause1 + clause2).filter { it.variableName != v }
-}
+fun resolve(clause1: Clause, clause2: Clause, v: VarNameType): Clause =
+    (clause1 + clause2).filter { it.variableName != v }
 
 fun analyzeConflict(f: Formula, state: State, level: Int): Pair<Int, Clause> {
     if (level == 0) {
         return Pair(-1, listOf())
     }
     var currentClause = f.find { !clauseHasUnassignedVars(it, state) && it.all { literal ->
-        state[literal.variableName]?.value != literal.hasNegation
+        state[literal.variableName]?.value == literal.hasNegation
     }} ?: throw IllegalArgumentException()
 
     while (!oneLiteralAtLevel(currentClause, state, level)) {
@@ -151,9 +144,13 @@ fun main(args: Array<String>) {
         }
 
         val formula = DIMACSParser.getFormula(inputText)
-        formula.forEach {
-            println(it.joinToString(" v ") { (if (it.hasNegation) "~" else "") + it.variableName.toString() })
-        }
+        println(
+            formula.joinToString(" /\\ ") {
+                "(" + it.joinToString(" \\/ ") {
+                    (if (it.hasNegation) "~" else "") + it.variableName.toString()
+                } + ")"
+            } + "\n"
+        )
 
         val (sat, interp) = runCDCLSolver(formula)
         if (sat) {
