@@ -68,8 +68,8 @@ fun analyzeConflict(f: Formula, state: State, level: Int): Pair<Int, Clause> {
         currentClause = resolve(f[previousClauseIndex], currentClause, selectedLiteral.variableName)
     }
 
-    val newLevel = currentClause.map { state[it.variableName]?.level ?: -1 }.filter { it != level }.
-    maxByOrNull { it } ?: -1
+    val newLevel = currentClause.map { state[it.variableName]?.level ?: 0 }.filter { it != level }.
+    maxByOrNull { it } ?: 0
     return Pair(newLevel, currentClause)
 }
 

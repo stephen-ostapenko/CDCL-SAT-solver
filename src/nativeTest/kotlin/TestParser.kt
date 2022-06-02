@@ -28,7 +28,7 @@ class TestParser {
             listOf(Literal(1, false), Literal(3, true)),
             listOf(Literal(2, false), Literal(3, false), Literal(1, true)),
             listOf(Literal(1, false), Literal(2, true)),
-            listOf(Literal(1, true), Literal(3, false), Literal(2, false)),
+            listOf(Literal(10, true), Literal(3, false), Literal(2, false)),
         )
 
         assertEquals(formula, DIMACSParser.getFormula(input))
