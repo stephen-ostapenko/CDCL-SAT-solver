@@ -1,8 +1,8 @@
 package mkn.mathlog.utils
 
-import mkn.mathlog.Clause
-import mkn.mathlog.Formula
-import mkn.mathlog.Literal
+import mkn.mathlog.satSolver.Clause
+import mkn.mathlog.satSolver.Formula
+import mkn.mathlog.satSolver.Literal
 import kotlin.math.abs
 import kotlin.math.max
 
