@@ -149,13 +149,15 @@ fun main(args: Array<String>) {
         }
 
         val formula = DIMACSParser.getFormula(inputText)
-        println(
-            formula.joinToString(" /\\ ") {
-                "(" + it.joinToString(" \\/ ") {
-                    (if (it.hasNegation) "~" else "") + it.variableName.toString()
-                } + ")"
-            } + "\n"
-        )
+        if (!arguments.quiet) {
+            println(
+                formula.joinToString(" /\\ ") {
+                    "(" + it.joinToString(" \\/ ") {
+                        (if (it.hasNegation) "~" else "") + it.variableName.toString()
+                    } + ")"
+                } + "\n"
+            )
+        }
 
         val (sat, interp) = runCDCLSolver(formula)
         if (sat) {
