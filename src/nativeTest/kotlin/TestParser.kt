@@ -119,6 +119,20 @@ class TestParser {
     }
 
     @Test
+    fun testMultipleTags() {
+        val input = """
+            p cnf 3 2
+            1 2 3
+            -1 -2 -3
+            p cnf 3 2
+        """.trimIndent()
+
+        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
+            DIMACSParser.getFormula(input)
+        }
+    }
+
+    @Test
     fun testRubbishInput() {
         val input = """
             p cnf 1 1
@@ -194,6 +208,61 @@ class TestParser {
             p cnf 3 2
             1 2 3
             1 kek 2
+        """.trimIndent()
+
+        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
+            DIMACSParser.getFormula(input)
+        }
+    }
+
+    @Test
+    fun testVariablesCountLess() {
+        val input = """
+            p cnf 2 2
+            1 2 3
+            -1 -2 -3
+        """.trimIndent()
+
+        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
+            DIMACSParser.getFormula(input)
+        }
+    }
+
+    @Test
+    fun testVariablesCountGreater() {
+        val input = """
+            p cnf 5 2
+            1 2 3
+            -1 -2 -3
+        """.trimIndent()
+
+        val formula: Formula = mutableListOf(
+            listOf(Literal(1, false), Literal(2, false), Literal(3, false)),
+            listOf(Literal(1, true), Literal(2, true), Literal(3, true)),
+        )
+
+        assertEquals(formula, DIMACSParser.getFormula(input))
+    }
+
+    @Test
+    fun testClausesCountLess() {
+        val input = """
+            p cnf 3 1
+            1 2 3
+            -1 -2 -3
+        """.trimIndent()
+
+        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
+            DIMACSParser.getFormula(input)
+        }
+    }
+
+    @Test
+    fun testClausesCountGreater() {
+        val input = """
+            p cnf 3 4
+            1 2 3
+            -1 -2 -3
         """.trimIndent()
 
         assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {

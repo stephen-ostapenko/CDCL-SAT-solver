@@ -61,7 +61,7 @@ class DIMACSParser() {
                 clausesCount++
             }
 
-            if (parameters != null && parameters.first != variablesCount) {
+            if (parameters != null && parameters.first < variablesCount) {
                 throw DIMACSException(
                     "DIMACS parameters don't fit the given file: " +
                             "expected ${parameters.first} variables but got $variablesCount\n"
