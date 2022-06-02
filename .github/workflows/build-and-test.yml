@@ -2,7 +2,7 @@ name: SAT solver test
 
 on:
   push:
-    branches: [ add-tests ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
