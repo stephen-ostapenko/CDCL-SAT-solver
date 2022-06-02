@@ -4,10 +4,10 @@ data class VariableInfo(var value: Boolean, val antecedent: Int?, val level: Int
 typealias State = MutableMap<VarNameType, VariableInfo>
 
 fun formulaHasUnassignedVars(allVars: List<VarNameType>, state: State): Boolean =
-        state.size < allVars.size
+    state.size < allVars.size
 
 fun clauseHasUnassignedVars(clause: Clause, state: State): Boolean =
-        clause.any { !state.containsKey(it.variableName) }
+    clause.any { !state.containsKey(it.variableName) }
 
 fun BCP(f: Formula, state: State, level: Int): Boolean {
     while (true) {
