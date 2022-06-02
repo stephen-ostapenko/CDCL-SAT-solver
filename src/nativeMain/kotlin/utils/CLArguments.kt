@@ -9,4 +9,5 @@ class CLArguments : CliktCommand() {
 
     val inputFile: String? by option("-i", "--input", help = "Path to DIMACS input file")
     val quiet: Boolean by option("-q", "--quiet").flag()
+    val time: Boolean by option("-t", "--time").flag()
 }

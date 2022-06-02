@@ -6,6 +6,7 @@ import mkn.mathlog.utils.CLArguments
 import mkn.mathlog.utils.DIMACSParser
 import mkn.mathlog.utils.FileInput
 import mkn.mathlog.satSolver.runCDCLSolver
+import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
     try {
@@ -49,17 +50,24 @@ fun main(args: Array<String>) {
             )
         }
 
-        val (sat, interp) = runCDCLSolver(formula)
-        if (sat) {
-            println("satisfiable")
-        } else {
-            println("unsatisfiable")
+        val timeElapsed = measureTimeMillis {
+            val (sat, interp) = runCDCLSolver(formula)
+            if (sat) {
+                println("satisfiable")
+            } else {
+                println("unsatisfiable")
+            }
+
+            if (sat) {
+                interp.forEach {
+                    println("${it.key} <- ${it.value.value}")
+                }
+            }
         }
 
-        if (sat) {
-            interp.forEach {
-                println("${it.key} <- ${it.value.value}")
-            }
+        if (arguments.time) {
+            println()
+            println("Done in $timeElapsed ms")
         }
 
     } catch (e: Exception) {
