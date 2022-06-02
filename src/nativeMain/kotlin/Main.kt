@@ -52,6 +52,7 @@ fun decideNewValue(f: Formula, state: State, level: Int) {
     }
 
     val (decidedLiteral, _) = score.maxByOrNull { (_, score) -> score } ?: return
+    println("decision: $decidedLiteral $score")
     state[decidedLiteral.variable] = VariableInfo(!decidedLiteral.hasNegation, null, level)
 }
 
@@ -80,8 +81,8 @@ fun analyzeConflict(f: Formula, state: State, level: Int): Pair<Int, Clause> {
         currentClause = resolve(f[previousClauseIndex], currentClause, selectedLiteral.variable)
     }
 
-    val newLevel = currentClause.map { state.get(it.variable)?.level ?: -1 }.filter {it != level}.
-        maxByOrNull { it } ?: -1
+    val newLevel = currentClause.map { state.get(it.variable)?.level ?: 0 }.filter { it != level }.
+        maxByOrNull { it } ?: 0
     return Pair(newLevel, currentClause)
 }
 
@@ -99,6 +100,9 @@ fun CDCL(f: Formula): Pair<Boolean, State> {
         while (BCP(f, state, level) == false) {
             val (backLevel, learntClause) = analyzeConflict(f, state, level)
             f.add(learntClause)
+            println("was level: $level")
+            println("new level $backLevel")
+            println("learnt clause $learntClause")
             if (backLevel < 0) {
                 return Pair(false, mutableMapOf())
             } else {
@@ -144,6 +148,12 @@ fun main() {
         listOf(Literal(1, true), Literal(2, true), Literal(3, false)),
         listOf(Literal(1, true), Literal(2, true), Literal(3, true)),
     )*/
+    val f: Formula = mutableListOf(
+        listOf(Literal(2, false), Literal(3, true)),
+        listOf(Literal(2, true), Literal(1, false)),
+        listOf(Literal(2, true), Literal(1, true)),
+        listOf(Literal(1, false), Literal(2, false))
+    )
     val (isSat, finalState) = CDCL(f)
     if (isSat) {
         println("SAT")
