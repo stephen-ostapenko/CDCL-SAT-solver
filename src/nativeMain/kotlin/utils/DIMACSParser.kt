@@ -6,7 +6,7 @@ import mkn.mathlog.satSolver.Literal
 import kotlin.math.abs
 import kotlin.math.max
 
-class DIMACSParser() {
+class DIMACSParser {
     companion object {
         fun getFormula(text: String): Formula {
             val lines = text.split("\n", "\r\n")

@@ -1,5 +1,5 @@
-import mkn.mathlog.Formula
-import mkn.mathlog.Literal
+import mkn.mathlog.satSolver.Formula
+import mkn.mathlog.satSolver.Literal
 import mkn.mathlog.utils.DIMACSParser
 import kotlin.test.Test
 import kotlin.test.assertEquals

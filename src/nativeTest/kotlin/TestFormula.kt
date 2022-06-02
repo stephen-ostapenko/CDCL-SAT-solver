@@ -2,7 +2,7 @@ import mkn.mathlog.satSolver.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class TestParser {
+class TestFormula {
     private val emptyFormula: Formula = mutableListOf()
 
     private val f1: Formula = mutableListOf(
