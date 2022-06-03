@@ -3,7 +3,6 @@
 import sys
 import os
 import subprocess
-import glob
 
 TMP_FILE = ".tmp_file"
 
@@ -44,7 +43,7 @@ def get_result():
 	elif (lines[0] == "unsatisfiable"):
 		return 0, None
 	else:
-		raise Exception("Unexpected output")
+		raise Exception(f"Unexpected output: {lines[0]}")
 
 def validate_result(interp, file):
 	fi = open(file, "r")

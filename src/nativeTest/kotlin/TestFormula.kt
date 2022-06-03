@@ -29,7 +29,7 @@ class TestFormula {
     }
 
     @Test
-    fun `get all vars for formula with > 1 variables`() {
+    fun `get all vars for formula with greater than 1 variables`() {
         assertEquals(listOf(2, 3, 1), getAllVars(f2))
     }
 }
