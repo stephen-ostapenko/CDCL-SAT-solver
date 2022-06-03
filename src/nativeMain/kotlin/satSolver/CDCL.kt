@@ -216,7 +216,10 @@ class CDCLSolver(formula: Formula) {
                     referencesOnVariable.getOrPut(f[clauseID][clausesInfo[clauseID].second].variableName, { mutableSetOf() }).remove(Pair(clauseID, clausesInfo[clauseID].second))
                 }
                 //println("new values ${clausesInfo[clauseID].first} $position")
-                clausesInfo[clauseID] = Pair(position, clausesInfo[clauseID].first)
+                clausesInfo[clauseID] = Pair(
+                        minOf(position, clausesInfo[clauseID].first),
+                        maxOf(position, clausesInfo[clauseID].first)
+                )
                 if (clauseStatus(clauseID) == ClauseStatus.UNIT) {
                     unitClauses.add(clauseID)
                 }
