@@ -15,7 +15,7 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
     private var variablesInfo = arrayOfNulls<VariableInfo?>(variablesCount + 1)
     private var clausesInfo: WatchedLiterals = mutableListOf()
     private val unitClauses = mutableListOf<Int>()
-    private var referencesOnVariable = Array<MutableSet<Pair<Int, Int>>>(variablesCount + 1, { mutableSetOf() })
+    private var referencesOnVariable = Array<MutableSet<Pair<Int, Int>>>(variablesCount + 1) { mutableSetOf() }
     private var literalsScore = mutableMapOf<Literal, Double>()
     private val updates = mutableListOf<VarNameType>()
     private var scoreChangeIteration = 0
@@ -29,7 +29,7 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
         if (f[clauseID].size > 1) {
             referencesOnVariable[f[clauseID][1].variableName].add(Pair(clauseID, 1))
         }
-        val oldVariablesInfo = Array<VariableInfo?>(variablesCount + 1, { index -> variablesInfo[index] })
+        val oldVariablesInfo = Array(variablesCount + 1) { index -> variablesInfo[index] }
         variablesInfo = arrayOfNulls<VariableInfo?>(variablesCount + 1)
         for (variable in updates) {
             val variableInfo = oldVariablesInfo[variable] ?: throw IllegalArgumentException("error in init clause function: $variable")
