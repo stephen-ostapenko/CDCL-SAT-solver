@@ -293,7 +293,7 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
                 val conflictClauseID: Int = BCP(level) ?: break
                 val (backLevel, learntClause) = analyzeConflict(level, conflictClauseID, variablesCount, clausesCount)
                 if (backLevel < 0) {
-                    return Pair(true, arrayOfNulls<VariableInfo?>(variablesCount + 1))
+                    return Pair(false, arrayOfNulls<VariableInfo?>(variablesCount + 1))
                 } else {
                     goBack(backLevel)
                     level = backLevel
