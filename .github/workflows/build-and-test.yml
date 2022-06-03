@@ -1,0 +1,28 @@
+name: SAT solver test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build
+        run: |
+          ./gradlew nativeBinaries
+          ./gradlew nativeTestBinaries
+          
+
+      - name: Run unit-tests
+        run: ./gradlew nativeTest
+        
+      - name: Run integration tests
+        run: python3 integrationTests/itest.py --fail

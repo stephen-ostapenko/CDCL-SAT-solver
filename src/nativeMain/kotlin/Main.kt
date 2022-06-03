@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.core.PrintHelpMessage
 import mkn.mathlog.utils.CLArguments
 import mkn.mathlog.utils.DIMACSParser
 import mkn.mathlog.utils.FileInput
+import kotlin.system.measureTimeMillis
 import mkn.mathlog.satSolver.CDCLSolver
 
 fun main(args: Array<String>) {
@@ -39,25 +40,34 @@ fun main(args: Array<String>) {
         }
 
         val formula = DIMACSParser.getFormula(inputText)
-        println(
-            formula.joinToString(" /\\ ") {
-                "(" + it.joinToString(" \\/ ") {
-                    (if (it.hasNegation) "~" else "") + it.variableName.toString()
-                } + ")"
-            } + "\n"
-        )
+        if (!arguments.quiet) {
+            println(
+                formula.joinToString(" /\\ ") {
+                    "(" + it.joinToString(" \\/ ") {
+                        (if (it.hasNegation) "~" else "") + it.variableName.toString()
+                    } + ")"
+                } + "\n"
+            )
 
-        val (sat, interp) = CDCLSolver(formula).run()
-        if (sat) {
-            println("satisfiable")
-        } else {
-            println("unsatisfiable")
+
+        val timeElapsed = measureTimeMillis {
+            val (sat, interp) = CDCLSolver(formula).run()
+            if (sat) {
+                println("satisfiable")
+            } else {
+                println("unsatisfiable")
+            }
+
+            if (sat) {
+                interp.forEach {
+                    println("${it.key} <- ${it.value.value}")
+                }
+            }
         }
 
-        if (sat) {
-            interp.forEach {
-                println("${it.key} <- ${it.value.value}")
-            }
+        if (arguments.time) {
+            println()
+            println("Done in $timeElapsed ms")
         }
 
     } catch (e: Exception) {
