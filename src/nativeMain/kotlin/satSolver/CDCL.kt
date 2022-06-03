@@ -7,15 +7,15 @@ import mkn.mathlog.utils.analyzeConflictWithMinCut
 import kotlin.math.floor
 
 data class VariableInfo(var value: Boolean, val antecedent: Int?, val level: Int)
-typealias VariablesState = MutableMap<VarNameType, VariableInfo>
+typealias VariablesState = Array<VariableInfo?>
 typealias WatchedLiterals = MutableList<Pair<Int, Int>>
 
-class CDCLSolver(formula: Formula) {
+class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: Int) {
     private var f = formula
-    private var variablesInfo = mutableMapOf<VarNameType, VariableInfo>()
+    private var variablesInfo = arrayOfNulls<VariableInfo?>(variablesCount + 1)
     private var clausesInfo: WatchedLiterals = mutableListOf()
     private val unitClauses = mutableListOf<Int>()
-    private var referencesOnVariable = mutableMapOf<VarNameType, MutableSet<Pair<Int, Int>>>()
+    private var referencesOnVariable = Array<MutableSet<Pair<Int, Int>>>(variablesCount + 1, { mutableSetOf() })
     private var literalsScore = mutableMapOf<Literal, Double>()
     private val updates = mutableListOf<VarNameType>()
     private var scoreChangeIteration = 0
@@ -23,14 +23,13 @@ class CDCLSolver(formula: Formula) {
     private fun initClause(clauseID: Int) {
         clausesInfo.add(Pair(0, 1))
         if (f[clauseID].isNotEmpty()) {
-            referencesOnVariable.getOrPut(f[clauseID][0].variableName) { mutableSetOf() }.add(Pair(clauseID, 0))
+            referencesOnVariable[f[clauseID][0].variableName].add(Pair(clauseID, 0))
         }
         if (f[clauseID].size > 1) {
-            referencesOnVariable.getOrPut(f[clauseID][1].variableName) { mutableSetOf() }.add(Pair(clauseID, 1))
+            referencesOnVariable[f[clauseID][1].variableName].add(Pair(clauseID, 1))
         }
-        val oldVariablesInfo = mutableMapOf<VarNameType, VariableInfo>()
-        oldVariablesInfo.putAll(variablesInfo)
-        variablesInfo.clear()
+        val oldVariablesInfo = Array<VariableInfo?>(variablesCount + 1, { index -> variablesInfo[index] })
+        variablesInfo = arrayOfNulls<VariableInfo?>(variablesCount + 1)
         for (variable in updates) {
             val variableInfo = oldVariablesInfo[variable] ?: throw IllegalArgumentException("error in init clause function: $variable")
             variablesInfo[variable] = variableInfo
@@ -38,8 +37,6 @@ class CDCLSolver(formula: Formula) {
                 unitClauses.add(clauseID)
             }
         }
-        unitClauses.add(clauseID)
-
         unitClauses.add(clauseID)
 
         f[clauseID].forEach { literal ->
@@ -118,8 +115,7 @@ class CDCLSolver(formula: Formula) {
                 watchedIndex1++
             }
             if (watchedIndex1 < f[clauseID].size && getVariableInClauseStatus(clauseID, watchedIndex1) == VariableInClauseStatus.UNRESOLVED) {
-                referencesOnVariable.getOrPut(f[clauseID][watchedIndex1].variableName) { mutableSetOf() }
-                    .add(Pair(clauseID, watchedIndex1))
+                referencesOnVariable[f[clauseID][watchedIndex1].variableName].add(Pair(clauseID, watchedIndex1))
             }
             if (watchedIndex1 > watchedIndex2) {
                 watchedIndex1 = watchedIndex2.also { watchedIndex2 = watchedIndex1 }
@@ -139,7 +135,7 @@ class CDCLSolver(formula: Formula) {
         variablesInfo[variable] = VariableInfo(value, antecedent, level)
         updates.add(variable)
         var unsat: Int? = null
-        for ((clauseID, _) in referencesOnVariable.getOrElse(variable) { mutableListOf() }) {
+        for ((clauseID, _) in referencesOnVariable[variable]) {
             val result = updateClause(variable, value, clauseID)
             if (result != null) {
                 unsat = result
@@ -252,15 +248,14 @@ class CDCLSolver(formula: Formula) {
             if (variableInfo.level <= backLevel) {
                 break
             }
-            variablesInfo.remove(variable)
+            variablesInfo[variable] = null
             updates.removeLast()
             for ((clauseID, position) in referencesOnVariable.getOrElse(variable) { mutableListOf() }) {
                 if (f[clauseID].getVariable(clausesInfo[clauseID].first) == variable || f[clauseID].getVariable(clausesInfo[clauseID].second) == variable) {
                     continue
                 }
                 if (clausesInfo[clauseID].second < f[clauseID].size) {
-                    referencesOnVariable.getOrPut(f[clauseID][clausesInfo[clauseID].second].variableName) { mutableSetOf() }
-                        .remove(Pair(clauseID, clausesInfo[clauseID].second))
+                    referencesOnVariable[f[clauseID][clausesInfo[clauseID].second].variableName].remove(Pair(clauseID, clausesInfo[clauseID].second))
                 }
                 clausesInfo[clauseID] = Pair(
                     minOf(position, clausesInfo[clauseID].first),
@@ -282,9 +277,9 @@ class CDCLSolver(formula: Formula) {
         }
     }
 
-    fun run(variablesCount: Int, clausesCount: Int): Pair<Boolean, VariablesState> {
+    fun run(): Pair<Boolean, VariablesState> {
         if (BCP(0) != null) {
-            return Pair(false, mutableMapOf())
+            return Pair(false, arrayOfNulls<VariableInfo?>(variablesCount + 1))
         }
 
         val distinctVarsCount = f.flatten().map { it.variableName }.distinct().size
@@ -296,7 +291,7 @@ class CDCLSolver(formula: Formula) {
                 val conflictClauseID: Int = BCP(level) ?: break
                 val (backLevel, learntClause) = analyzeConflict(level, conflictClauseID, variablesCount, clausesCount)
                 if (backLevel < 0) {
-                    return Pair(false, mutableMapOf())
+                    return Pair(true, arrayOfNulls<VariableInfo?>(variablesCount + 1))
                 } else {
                     goBack(backLevel)
                     level = backLevel
@@ -304,6 +299,6 @@ class CDCLSolver(formula: Formula) {
                 }
             }
         }
-        return Pair(true, variablesInfo)
+        return Pair(true, arrayOfNulls<VariableInfo?>(variablesCount + 1))
     }
 }

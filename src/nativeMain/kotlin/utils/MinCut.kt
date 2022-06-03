@@ -42,7 +42,8 @@ fun buildNet(variablesCount: Int, formula: Formula, state: VariablesState, confl
         addEdge((vertex - 1) * 2, (vertex - 1) * 2 + 1, 1)
     }
 
-    for ((name, info) in state) {
+    for ((name, inf) in state.withIndex()) {
+        val info = inf ?: continue
         if (info.antecedent == null) {
             addEdge(source, (name - 1) * 2, INF)
             continue

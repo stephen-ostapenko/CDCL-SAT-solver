@@ -54,7 +54,7 @@ fun main(args: Array<String>) {
         }
 
         val timeElapsed = measureTimeMillis {
-            val (sat, interp) = CDCLSolver(formula).run(parser.getVariablesCount(), parser.getClausesCount())
+            val (sat, interp) = CDCLSolver(formula, parser.getVariablesCount(), parser.getClausesCount()).run()
             if (sat) {
                 println("satisfiable")
             } else {
@@ -62,8 +62,8 @@ fun main(args: Array<String>) {
             }
 
             if (sat) {
-                interp.forEach {
-                    println("${it.key} <- ${it.value.value}")
+                interp.forEachIndexed { index, value ->
+                    if (value != null) println("$index <- $value")
                 }
             }
         }
