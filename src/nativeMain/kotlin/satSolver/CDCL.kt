@@ -26,7 +26,7 @@ class CDCLSolver(formula: Formula) {
         oldVariablesInfo.putAll(variablesInfo)
         variablesInfo.clear()
         for (variable in updates) {
-            val variableInfo = oldVariablesInfo.get(variable) ?: throw IllegalArgumentException("init clause: $variable")
+            val variableInfo = oldVariablesInfo.get(variable) ?: throw IllegalArgumentException("error in init clause function: $variable")
             variablesInfo[variable] = variableInfo
             if (updateClause(variable, variableInfo.value, clauseID) != null) {
                 unitClauses.add(clauseID)
@@ -50,9 +50,6 @@ class CDCLSolver(formula: Formula) {
     private fun getVariableInClauseStatus(clauseID: Int, index: Int): VariableInClauseStatus {
         val (variable, hasNegation) = f[clauseID][index]
         val value = variablesInfo[variable]?.value
-        if (clauseID == 4) {
-            //println("variable status: $variable $hasNegation $value")
-        }
         if (value == null) {
             return VariableInClauseStatus.UNRESOLVED
         } else if (value == !hasNegation) {
@@ -66,9 +63,6 @@ class CDCLSolver(formula: Formula) {
         var satisfied = false
         var unassignedCount = 0
         fun processWatchedLiteral(index: Int) {
-            if (clauseID == 4) {
-                //println("process watched literal: $index")
-            }
             if (index < 0 || index >= f[clauseID].size) {
                 return
             }
@@ -94,8 +88,7 @@ class CDCLSolver(formula: Formula) {
 
     private fun getUnassignedVariable(clauseID: Int): Pair<VarNameType, Int> {
         val (watchedIndex1, watchedIndex2) = clausesInfo[clauseID]
-        if (watchedIndex1 >= 0 && watchedIndex1 < f[clauseID].size &&
-                getVariableInClauseStatus(clauseID, watchedIndex1) == VariableInClauseStatus.UNRESOLVED) {
+        if (watchedIndex1 >= 0 && watchedIndex1 < f[clauseID].size && getVariableInClauseStatus(clauseID, watchedIndex1) == VariableInClauseStatus.UNRESOLVED) {
             return Pair(f[clauseID][watchedIndex1].variableName, watchedIndex1)
         }
         return Pair(f[clauseID][watchedIndex2].variableName, watchedIndex2)
@@ -106,11 +99,9 @@ class CDCLSolver(formula: Formula) {
             return null
         }
         var (watchedIndex1, watchedIndex2) = clausesInfo[clauseID]
-        //println("in $clauseID $watchedIndex1 $watchedIndex2")
         if (f[clauseID].getVariable(watchedIndex1) != variable) {
             watchedIndex1 = watchedIndex2.also { watchedIndex2 = watchedIndex1 }
         }
-        //println("${f[clauseID].getVariable(watchedIndex1)} ${f[clauseID].getValue(watchedIndex1)} $value")
         if (f[clauseID].getValue(watchedIndex1) != value) {
             watchedIndex1 = maxOf(watchedIndex1, watchedIndex2) + 1
             while (watchedIndex1 < f[clauseID].size && getVariableInClauseStatus(clauseID, watchedIndex1) == VariableInClauseStatus.INCORRECT) {
@@ -120,16 +111,13 @@ class CDCLSolver(formula: Formula) {
                 referencesOnVariable.getOrPut(f[clauseID][watchedIndex1].variableName, { mutableSetOf() }).add(Pair(clauseID, watchedIndex1))
             }
             if (watchedIndex1 > watchedIndex2) {
-                //swap(watchedIndex1, watchedIndex2)
                 watchedIndex1 = watchedIndex2.also { watchedIndex2 = watchedIndex1 }
             }
             clausesInfo[clauseID] = Pair(watchedIndex1, watchedIndex2)
             val newStatus = clauseStatus(clauseID)
-            //println("out $clauseID $watchedIndex1 $watchedIndex2 $newStatus")
             if (newStatus == ClauseStatus.UNIT) {
                 unitClauses.add(clauseID)
             } else if (newStatus == ClauseStatus.UNSATISFIED) {
-                //println("failed assign: $clauseID")
                 return clauseID
             }
         }
@@ -140,7 +128,6 @@ class CDCLSolver(formula: Formula) {
         variablesInfo[variable] = VariableInfo(value, antecedent, level)
         updates.add(variable)
         var unsat: Int? = null
-        //println("assign: $variable ${referencesOnVariable.getOrElse(variable) { mutableListOf() }}")
         for ((clauseID, _) in referencesOnVariable.getOrElse(variable) { mutableListOf() }) {
             val result = updateClause(variable, value, clauseID)
             if (result != null) {
@@ -152,7 +139,7 @@ class CDCLSolver(formula: Formula) {
 
     private fun decideNewValue(level: Int) {
         val (decidedLiteral, _) = literalsScore.filter { (literal, _) -> variablesInfo.get(literal.variableName) == null }
-                .maxByOrNull { (_, score) -> score } ?: return
+            .maxByOrNull { (_, score) -> score } ?: return
 
         assign(decidedLiteral.variableName, !decidedLiteral.hasNegation, level, null)
     }
@@ -162,14 +149,12 @@ class CDCLSolver(formula: Formula) {
             val clauseIndex = unitClauses.last()
             unitClauses.removeLast()
             val status = clauseStatus(clauseIndex)
-            //println("BCP $clauseIndex $status")
             if (status == ClauseStatus.UNSATISFIED) {
                 return clauseIndex
             }
             if (status != ClauseStatus.UNIT) {
                 continue
             }
-            //println(clauseIndex)
             val (variable, position) = getUnassignedVariable(clauseIndex)
             val value: Boolean = f[clauseIndex].getValue(position) ?: throw IllegalArgumentException("in BCP")
             val conflictClauseID = assign(variable, value, level, clauseIndex) ?: continue
@@ -179,7 +164,7 @@ class CDCLSolver(formula: Formula) {
     }
 
     fun oneLiteralAtLevel(clause: Clause, state: VariablesState, level: Int): Boolean =
-            clause.count { state[it.variableName]?.level == level } == 1
+        clause.count { state[it.variableName]?.level == level } == 1
 
     fun analyzeConflict(level: Int, conflictClauseID: Int): Pair<Int, Clause> {
         if (level == 0) {
@@ -201,10 +186,8 @@ class CDCLSolver(formula: Formula) {
     }
 
     private fun goBack(backLevel: Int) {
-        //println("go back in")
         while (updates.isNotEmpty()) {
             val variable = updates.last()
-            //println("variable $variable")
             val variableInfo: VariableInfo = variablesInfo[variable] ?: throw IllegalArgumentException("go back")
             if (variableInfo.level <= backLevel) {
                 break
@@ -215,14 +198,12 @@ class CDCLSolver(formula: Formula) {
                 if (f[clauseID].getVariable(clausesInfo[clauseID].first) == variable || f[clauseID].getVariable(clausesInfo[clauseID].second) == variable) {
                     continue
                 }
-                //println("old values: $variable $clauseID ${clausesInfo[clauseID].first} ${clausesInfo[clauseID].second}")
                 if (clausesInfo[clauseID].second < f[clauseID].size) {
                     referencesOnVariable.getOrPut(f[clauseID][clausesInfo[clauseID].second].variableName, { mutableSetOf() }).remove(Pair(clauseID, clausesInfo[clauseID].second))
                 }
-                //println("new values ${clausesInfo[clauseID].first} $position")
                 clausesInfo[clauseID] = Pair(
-                        minOf(position, clausesInfo[clauseID].first),
-                        maxOf(position, clausesInfo[clauseID].first)
+                    minOf(position, clausesInfo[clauseID].first),
+                    maxOf(position, clausesInfo[clauseID].first)
                 )
                 if (clauseStatus(clauseID) == ClauseStatus.UNIT) {
                     unitClauses.add(clauseID)
@@ -252,9 +233,7 @@ class CDCLSolver(formula: Formula) {
             decideNewValue(level)
             while (true) {
                 val conflictClauseID: Int = BCP(level) ?: break
-                //println("conflict clause $conflictClauseID")
                 val (backLevel, learntClause) = analyzeConflict(level, conflictClauseID)
-                //println("analyze conflict result: $backLevel $learntClause")
                 if (backLevel < 0) {
                     return Pair(false, mutableMapOf())
                 } else {
