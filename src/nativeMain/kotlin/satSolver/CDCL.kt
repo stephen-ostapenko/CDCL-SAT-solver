@@ -29,9 +29,10 @@ class CDCLSolver(formula: Formula) {
                 unitClauses.add(clauseID)
             }
         }
+        unitClauses.add(clauseID)
 
         f[clauseID].forEach { literal ->
-            val newScore = literalsScore.getOrElse(literal, {0.0} ) + 1.0
+            val newScore = literalsScore.getOrElse(literal) { 0.0 } + 1.0
             literalsScore[literal] = newScore
         }
     }

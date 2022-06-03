@@ -48,6 +48,7 @@ fun main(args: Array<String>) {
                     } + ")"
                 } + "\n"
             )
+        }
 
 
         val timeElapsed = measureTimeMillis {
