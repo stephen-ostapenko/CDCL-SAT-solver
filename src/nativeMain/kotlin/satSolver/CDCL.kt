@@ -177,7 +177,6 @@ class CDCLSolver(formula: Formula) {
         clause.count { state[it.variableName]?.level == level } == 1
 
     object AnalyzeConflictWatcher {
-        var lastResult: Clause = listOf()
         var forceClassic = false
         var analyzesCount = 0
         var analyzesCountThreshold = 256
@@ -193,12 +192,14 @@ class CDCLSolver(formula: Formula) {
     }
 
 
-    fun analyzeConflict(level: Int, conflictClauseID: Int, variablesCount: Int, clausesCount: Int): Pair<Int, Clause> {
+    fun analyzeConflict(level: Int, conflictClauseID: Int, variablesCount: Int, clausesCount: Int): Pair<Int, Clause?> {
+        println("analyze on level $level")
+
         if (level == 0) {
-            return Pair(-1, listOf())
+            return Pair(-1, null)
         }
 
-        var result: Pair<Int, Clause>? = runBlocking {
+        var result: Pair<Int, Clause?>? = runBlocking {
             withTimeoutOrNull(50L) {
                 var currentClause = f[conflictClauseID]
                 while (!oneLiteralAtLevel(currentClause, variablesInfo, level)) {
@@ -221,10 +222,14 @@ class CDCLSolver(formula: Formula) {
         }
         if (result == null) {
             result = analyzeConflictWithMinCut(variablesCount, f, variablesInfo, level, conflictClauseID)
-            AnalyzeConflictWatcher.forceClassic = (result.second == AnalyzeConflictWatcher.lastResult)
-            AnalyzeConflictWatcher.lastResult = result.second
+            if (result.second in f) {
+                result = result.first to null
+                AnalyzeConflictWatcher.forceClassic = true
+            }
+            println("MinCut")
         } else {
             AnalyzeConflictWatcher.forceClassic = false
+            println("Classic")
         }
 
         AnalyzeConflictWatcher.analyzesCount++
@@ -232,15 +237,15 @@ class CDCLSolver(formula: Formula) {
             result = 0 to result.second
             AnalyzeConflictWatcher.analyzesCount = 0
             AnalyzeConflictWatcher.nextAnalyzesCountThreshold()
-            //println("=============================================================================")
+            println("=============================================================================")
         }
 
-        if (f.size - clausesCount >= AnalyzeConflictWatcher.learntClausesCountThreshold) {
-            result = 0 to result.second
+        /*if (f.size - clausesCount >= AnalyzeConflictWatcher.learntClausesCountThreshold) {
+            //result = 0 to result.second
             //shrinkFormula(f, clausesCount)
             AnalyzeConflictWatcher.nextLearntClausesCountThreshold()
-            //println("*****************************************************************************")
-        }
+            println("*****************************************************************************")
+        }*/
 
         return result
     }
@@ -300,7 +305,9 @@ class CDCLSolver(formula: Formula) {
                 } else {
                     goBack(backLevel)
                     level = backLevel
-                    addClause(learntClause)
+                    if (learntClause != null) {
+                        addClause(learntClause)
+                    }
                 }
             }
         }
