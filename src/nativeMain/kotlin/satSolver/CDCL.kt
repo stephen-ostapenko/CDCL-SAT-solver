@@ -22,13 +22,18 @@ class CDCLSolver(formula: Formula) {
         if (f[clauseID].size > 1) {
             referencesOnVariable.getOrPut(f[clauseID][1].variableName, { mutableSetOf() }).add(Pair(clauseID, 1))
         }
-
+        var oldVariablesInfo = mutableMapOf<VarNameType, VariableInfo>()
+        oldVariablesInfo.putAll(variablesInfo)
+        variablesInfo.clear()
         for (variable in updates) {
-            val value = variablesInfo.get(variable)?.value ?: throw IllegalArgumentException("init clause")
-            if (updateClause(variable, value, clauseID) != null) {
+            val variableInfo = oldVariablesInfo.get(variable) ?: throw IllegalArgumentException("init clause: $variable")
+            variablesInfo[variable] = variableInfo
+            if (updateClause(variable, variableInfo.value, clauseID) != null) {
                 unitClauses.add(clauseID)
             }
         }
+        unitClauses.add(clauseID)
+
         unitClauses.add(clauseID)
 
         f[clauseID].forEach { literal ->
