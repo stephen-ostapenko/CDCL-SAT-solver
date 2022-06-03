@@ -62,8 +62,8 @@ fun main(args: Array<String>) {
             }
 
             if (sat) {
-                interp.forEachIndexed { index, value ->
-                    if (value != null) println("$index <- $value")
+                interp.forEachIndexed { index, info ->
+                    if (info != null) println("$index <- ${info.value}")
                 }
             }
         }

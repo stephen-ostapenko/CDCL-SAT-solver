@@ -19,6 +19,7 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
     private var literalsScore = mutableMapOf<Literal, Double>()
     private val updates = mutableListOf<VarNameType>()
     private var scoreChangeIteration = 0
+    private var assignedVariablesCount = 0
 
     private fun initClause(clauseID: Int) {
         clausesInfo.add(Pair(0, 1))
@@ -133,6 +134,7 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
 
     private fun assign(variable: VarNameType, value: Boolean, level: Int, antecedent: Int?): Int? {
         variablesInfo[variable] = VariableInfo(value, antecedent, level)
+        assignedVariablesCount++
         updates.add(variable)
         var unsat: Int? = null
         for ((clauseID, _) in referencesOnVariable[variable]) {
@@ -147,7 +149,6 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
     private fun decideNewValue(level: Int) {
         val (decidedLiteral, _) = literalsScore.filter { (literal, _) -> variablesInfo[literal.variableName] == null }
             .maxByOrNull { (_, score) -> score } ?: return
-
         assign(decidedLiteral.variableName, !decidedLiteral.hasNegation, level, null)
     }
 
@@ -249,6 +250,7 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
                 break
             }
             variablesInfo[variable] = null
+            assignedVariablesCount--
             updates.removeLast()
             for ((clauseID, position) in referencesOnVariable.getOrElse(variable) { mutableListOf() }) {
                 if (f[clauseID].getVariable(clausesInfo[clauseID].first) == variable || f[clauseID].getVariable(clausesInfo[clauseID].second) == variable) {
@@ -284,7 +286,7 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
 
         val distinctVarsCount = f.flatten().map { it.variableName }.distinct().size
         var level = 0
-        while (variablesInfo.size < distinctVarsCount) {
+        while (assignedVariablesCount < distinctVarsCount) {
             level++
             decideNewValue(level)
             while (true) {
@@ -299,6 +301,6 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
                 }
             }
         }
-        return Pair(true, arrayOfNulls<VariableInfo?>(variablesCount + 1))
+        return Pair(true, variablesInfo)
     }
 }
