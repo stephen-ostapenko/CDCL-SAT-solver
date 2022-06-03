@@ -93,6 +93,9 @@ def run_test_suite(test_suite_prefix, fail_after_first_error):
 			if (sat and not validate_result(interp, f"{test_suite_prefix}-data/{tests[i]}")):
 				fail = True
 
+		#if (fail):
+		#	os.system(f"subl {test_suite_prefix}-data/{tests[i]}")
+
 		if (fail_after_first_error):
 			assert(not fail)
 
