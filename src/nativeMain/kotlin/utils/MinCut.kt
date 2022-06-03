@@ -10,11 +10,11 @@ data class Net(val gr: Graph, val edgeList: EdgeList, val source: Int, val drain
 
 const val INF = 1_000_000_000 + 2022
 
-fun analyzeConflictWithMinCut(formula: Formula, state: State, level: Int, variablesCount: Int): Pair<Int, Clause> {
-    val (gr, edgeList, source, drain) = buildNet(variablesCount, formula, state)
-    ////println("finding flow")
+fun analyzeConflictWithMinCut(variablesCount: Int, formula: Formula,
+                              state: VariablesState, level: Int, conflictClauseInd: Int): Pair<Int, Clause>
+{
+    val (gr, edgeList, source, drain) = buildNet(variablesCount, formula, state, conflictClauseInd)
     findFlowDinic(gr.size, source, drain, gr, edgeList)
-    ////println("found flow")
 
     val clause = findEdgeOfMinCut(variablesCount, state, gr.size, source, gr, edgeList)
     val newLevel = clause.map { state[it.variableName]?.level ?: 0 }.filter { it != level }.
@@ -23,17 +23,12 @@ fun analyzeConflictWithMinCut(formula: Formula, state: State, level: Int, variab
     return newLevel to clause
 }
 
-fun buildNet(variablesCount: Int, formula: Formula, state: State): Net {
+fun buildNet(variablesCount: Int, formula: Formula, state: VariablesState, conflictClauseInd: Int): Net {
     val source = variablesCount * 2
     val drain = variablesCount * 2 + 1
 
     val gr: Graph = List(variablesCount * 2 + 2) { mutableListOf() }
     val edgeList: EdgeList = mutableListOf()
-
-    val conflictClause = formula.find { !clauseHasUnassignedVars(it, state) && it.all { literal ->
-        state[literal.variableName]?.value == literal.hasNegation
-    }} ?: throw IllegalArgumentException("Can't find conflict clause")
-    //println(conflictClause)
 
     val addEdge = lambda@{ from: Int, to: Int, capacity: Int ->
         edgeList.add(Edge(to, capacity))
@@ -59,7 +54,7 @@ fun buildNet(variablesCount: Int, formula: Formula, state: State): Net {
         }
     }
 
-    conflictClause.forEach {
+    formula[conflictClauseInd].forEach {
         addEdge((it.variableName - 1) * 2 + 1, drain, INF)
     }
 
@@ -125,8 +120,6 @@ fun bfsDinic(source: Int, drain: Int, minFlow: Int, gr: Graph, edgeList: EdgeLis
     var flow = 0
     while (true) {
         used.fill(false)
-
-        ////println("run dfs")
         val res = dfsDinic(source, INF, drain, minFlow, gr, edgeList, used, edgePtr, dist)
         if (res == 0) {
             break
@@ -143,9 +136,7 @@ fun findFlowDinic(nVertex: Int, source: Int, drain: Int, gr: Graph, edgeList: Ed
     val dist = MutableList(nVertex) { 0 }
 
     for (iter in 30 downTo 0) {
-        ////println(iter)
         while (true) {
-            ////println("run bfs")
             val flow = bfsDinic(source, drain, 1 shl iter, gr, edgeList, used, edgePtr, dist)
             if (flow == 0) {
                 break
@@ -164,7 +155,7 @@ fun dfsFindEdgeOfMinCut(v: Int, gr: Graph, edgeList: EdgeList, used: MutableList
     }
 }
 
-fun findEdgeOfMinCut(variablesCount: Int, state: State,
+fun findEdgeOfMinCut(variablesCount: Int, state: VariablesState,
                      nVertex: Int, source: Int, gr: Graph, edgeList: EdgeList): Clause
 {
     val used = MutableList(nVertex) { false }

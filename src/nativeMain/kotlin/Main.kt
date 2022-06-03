@@ -39,7 +39,10 @@ fun main(args: Array<String>) {
             lines.joinToString("\n")
         }
 
-        val formula = DIMACSParser.getFormula(inputText)
+        val parser = DIMACSParser()
+        parser.parseText(inputText)
+
+        val formula = parser.getFormula()
         if (!arguments.quiet) {
             println(
                 formula.joinToString(" /\\ ") {
@@ -50,9 +53,8 @@ fun main(args: Array<String>) {
             )
         }
 
-
         val timeElapsed = measureTimeMillis {
-            val (sat, interp) = CDCLSolver(formula).run()
+            val (sat, interp) = CDCLSolver(formula).run(parser.getVariablesCount(), parser.getClausesCount())
             if (sat) {
                 println("satisfiable")
             } else {
