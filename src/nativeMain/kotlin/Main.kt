@@ -5,8 +5,8 @@ import com.github.ajalt.clikt.core.PrintHelpMessage
 import mkn.mathlog.utils.CLArguments
 import mkn.mathlog.utils.DIMACSParser
 import mkn.mathlog.utils.FileInput
-import mkn.mathlog.satSolver.runCDCLSolver
 import kotlin.system.measureTimeMillis
+import mkn.mathlog.satSolver.CDCLSolver
 
 fun main(args: Array<String>) {
     try {
@@ -48,10 +48,10 @@ fun main(args: Array<String>) {
                     } + ")"
                 } + "\n"
             )
-        }
+
 
         val timeElapsed = measureTimeMillis {
-            val (sat, interp) = runCDCLSolver(formula)
+            val (sat, interp) = CDCLSolver(formula).run()
             if (sat) {
                 println("satisfiable")
             } else {
