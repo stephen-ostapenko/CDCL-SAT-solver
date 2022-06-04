@@ -3,8 +3,8 @@ package mkn.mathlog.satSolver
 import kotlin.math.min
 
 data class Edge(val to: Int, val capacity: Int, var flow: Int = 0)
-typealias EdgeList = MutableList<Edge>
-typealias Graph = List<MutableList<Int>>
+typealias EdgeList = Array<Edge>
+typealias Graph = Array<Array<Int>>
 data class Net(val gr: Graph, val edgeList: EdgeList, val source: Int, val drain: Int)
 
 const val INF = 1_000_000_000 + 2022
@@ -26,8 +26,8 @@ fun buildNet(variablesCount: Int, formula: Formula, state: VariablesState, confl
     val source = variablesCount * 2
     val drain = variablesCount * 2 + 1
 
-    val gr: Graph = List(variablesCount * 2 + 2) { mutableListOf() }
-    val edgeList: EdgeList = mutableListOf()
+    val gr = Array(variablesCount * 2 + 2) { mutableListOf<Int>() }
+    val edgeList = mutableListOf<Edge>()
 
     val addEdge = lambda@{ from: Int, to: Int, capacity: Int ->
         edgeList.add(Edge(to, capacity))
@@ -58,11 +58,11 @@ fun buildNet(variablesCount: Int, formula: Formula, state: VariablesState, confl
         addEdge((it.variableName - 1) * 2 + 1, drain, INF)
     }
 
-    return Net(gr, edgeList, source, drain)
+    return Net(gr.map { it.toTypedArray() }.toTypedArray(), edgeList.toTypedArray(), source, drain)
 }
 
 fun dfsDinic(v: Int, curFlow: Int, drain: Int, minFlow: Int, gr: Graph, edgeList: EdgeList,
-             used: MutableList<Boolean>, edgePtr: MutableList<Int>, dist: List<Int>): Int
+             used: Array<Boolean>, edgePtr: Array<Int>, dist: Array<Int>): Int
 {
     if (v == drain) {
         return curFlow
@@ -94,7 +94,7 @@ fun dfsDinic(v: Int, curFlow: Int, drain: Int, minFlow: Int, gr: Graph, edgeList
 }
 
 fun bfsDinic(source: Int, drain: Int, minFlow: Int, gr: Graph, edgeList: EdgeList,
-             used: MutableList<Boolean>, edgePtr: MutableList<Int>, dist: MutableList<Int>): Int
+             used: Array<Boolean>, edgePtr: Array<Int>, dist: Array<Int>): Int
 {
     edgePtr.fill(0)
     dist.fill(INF)
@@ -131,9 +131,9 @@ fun bfsDinic(source: Int, drain: Int, minFlow: Int, gr: Graph, edgeList: EdgeLis
 }
 
 fun findFlowDinic(nVertex: Int, source: Int, drain: Int, gr: Graph, edgeList: EdgeList) {
-    val used = MutableList(nVertex) { false }
-    val edgePtr = MutableList(nVertex) { 0 }
-    val dist = MutableList(nVertex) { 0 }
+    val used = Array(nVertex) { false }
+    val edgePtr = Array(nVertex) { 0 }
+    val dist = Array(nVertex) { 0 }
 
     for (iter in 30 downTo 0) {
         while (true) {
@@ -145,7 +145,7 @@ fun findFlowDinic(nVertex: Int, source: Int, drain: Int, gr: Graph, edgeList: Ed
     }
 }
 
-fun dfsFindEdgeOfMinCut(v: Int, gr: Graph, edgeList: EdgeList, used: MutableList<Boolean>) {
+fun dfsFindEdgeOfMinCut(v: Int, gr: Graph, edgeList: EdgeList, used: Array<Boolean>) {
     used[v] = true
     for (edgeInd in gr[v]) {
         val edge = edgeList[edgeInd]
@@ -159,7 +159,7 @@ fun findEdgeOfMinCut(variablesCount: Int, state: VariablesState,
                      nVertex: Int, source: Int, gr: Graph, edgeList: EdgeList
 ): Clause
 {
-    val used = MutableList(nVertex) { false }
+    val used = Array(nVertex) { false }
     dfsFindEdgeOfMinCut(source, gr, edgeList, used)
 
     val result = mutableListOf<Literal>()
