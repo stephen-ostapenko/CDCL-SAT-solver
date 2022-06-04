@@ -1,9 +1,5 @@
-package mkn.mathlog.utils
+package mkn.mathlog.satSolver
 
-import mkn.mathlog.satSolver.Clause
-import mkn.mathlog.satSolver.Formula
-import mkn.mathlog.satSolver.Literal
-import mkn.mathlog.satSolver.VariablesState
 import kotlin.math.min
 
 data class Edge(val to: Int, val capacity: Int, var flow: Int = 0)
@@ -160,7 +156,8 @@ fun dfsFindEdgeOfMinCut(v: Int, gr: Graph, edgeList: EdgeList, used: MutableList
 }
 
 fun findEdgeOfMinCut(variablesCount: Int, state: VariablesState,
-                     nVertex: Int, source: Int, gr: Graph, edgeList: EdgeList): Clause
+                     nVertex: Int, source: Int, gr: Graph, edgeList: EdgeList
+): Clause
 {
     val used = MutableList(nVertex) { false }
     dfsFindEdgeOfMinCut(source, gr, edgeList, used)

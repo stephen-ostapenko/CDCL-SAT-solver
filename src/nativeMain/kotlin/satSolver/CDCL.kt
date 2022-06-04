@@ -3,7 +3,6 @@ package mkn.mathlog.satSolver
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import mkn.mathlog.utils.analyzeConflictWithMinCut
 import kotlin.math.floor
 
 data class VariableInfo(var value: Boolean, val antecedent: Int?, val level: Int)
@@ -316,11 +315,14 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
 
 fun runSolver(formula: Formula, variablesCount: Int, clausesCount: Int, verbose: Boolean): Pair<Boolean, VariablesState> {
     var stepsCount = 256L
-    var hardResetStepsCount = 8L
+    val hardResetStepsCount = 6
     var solver = CDCLSolver(formula, variablesCount, clausesCount)
 
+    if (verbose) {
+        println("solving formula with ${formula.size} clauses")
+    }
     var (result, f) = solver.run(stepsCount, false)
-    var curTries = 0L
+    var curTries = 0
     while (result == null) {
         if (verbose) {
             println("solving formula with ${f?.size} clauses")
@@ -331,10 +333,9 @@ fun runSolver(formula: Formula, variablesCount: Int, clausesCount: Int, verbose:
         val newResult = solver.run(stepsCount, curTries == hardResetStepsCount)
         if (curTries == hardResetStepsCount) {
             curTries = 0
-            hardResetStepsCount = floor(hardResetStepsCount * 1.4142).toLong()
         }
 
-        stepsCount = floor(stepsCount * 1.24).toLong()
+        stepsCount = floor(stepsCount * 1.008).toLong()
 
         result = newResult.first
         f = newResult.second
