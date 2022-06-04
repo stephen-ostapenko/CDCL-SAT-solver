@@ -173,25 +173,9 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
     fun oneLiteralAtLevel(clause: Clause, state: VariablesState, level: Int): Boolean =
         clause.count { state[it.variableName]?.level == level } == 1
 
-    object AnalyzeConflictWatcher {
-        var analyzesCount = 0
-        var analyzesCountThreshold = 256
-        var learntClausesCountThreshold = 512
-
-        fun nextAnalyzesCountThreshold() {
-            analyzesCountThreshold = floor(analyzesCountThreshold * 1.24).toInt()
-        }
-
-        fun nextLearntClausesCountThreshold() {
-            learntClausesCountThreshold = floor(learntClausesCountThreshold * 1.4142).toInt()
-        }
-    }
-
     private var forceClassic = false
 
     fun analyzeConflict(level: Int, conflictClauseID: Int): Pair<Int, Clause?> {
-        //println("analyze on level $level")
-
         if (level == 0) {
             return Pair(-1, null)
         }
@@ -223,26 +207,9 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
                 result = result.first to null
                 forceClassic = true
             }
-            //println("MinCut")
         } else {
             forceClassic = false
-            //println("Classic")
         }
-
-        /*AnalyzeConflictWatcher.analyzesCount++
-        if (AnalyzeConflictWatcher.analyzesCount == AnalyzeConflictWatcher.analyzesCountThreshold) {
-            result = 0 to result.second
-            AnalyzeConflictWatcher.analyzesCount = 0
-            AnalyzeConflictWatcher.nextAnalyzesCountThreshold()
-            println("=============================================================================")
-        }*/
-
-        /*if (f.size - clausesCount >= AnalyzeConflictWatcher.learntClausesCountThreshold) {
-            //result = 0 to result.second
-            //shrinkFormula(f, clausesCount)
-            AnalyzeConflictWatcher.nextLearntClausesCountThreshold()
-            println("*****************************************************************************")
-        }*/
 
         return result
     }
@@ -347,7 +314,7 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
     }
 }
 
-fun runSolver(formula: Formula, variablesCount: Int, clausesCount: Int): Pair<Boolean, VariablesState> {
+fun runSolver(formula: Formula, variablesCount: Int, clausesCount: Int, verbose: Boolean): Pair<Boolean, VariablesState> {
     var stepsCount = 256L
     var hardResetStepsCount = 8L
     var solver = CDCLSolver(formula, variablesCount, clausesCount)
@@ -355,8 +322,9 @@ fun runSolver(formula: Formula, variablesCount: Int, clausesCount: Int): Pair<Bo
     var (result, f) = solver.run(stepsCount, false)
     var curTries = 0L
     while (result == null) {
-        println("==========================================================================================")
-        println("new formula with ${f?.size} clauses")
+        if (verbose) {
+            println("solving new formula with ${f?.size} clauses")
+        }
 
         curTries++
         solver = CDCLSolver(f ?: error("Formula is null"), variablesCount, clausesCount)

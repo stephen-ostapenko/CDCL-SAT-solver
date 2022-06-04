@@ -1,6 +1,9 @@
 package mkn.mathlog.utils
 
-import mkn.mathlog.satSolver.*
+import mkn.mathlog.satSolver.Clause
+import mkn.mathlog.satSolver.Formula
+import mkn.mathlog.satSolver.Literal
+import mkn.mathlog.satSolver.VariablesState
 import kotlin.math.min
 
 data class Edge(val to: Int, val capacity: Int, var flow: Int = 0)

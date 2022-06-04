@@ -1,4 +1,6 @@
-import mkn.mathlog.satSolver.*
+import mkn.mathlog.satSolver.Formula
+import mkn.mathlog.satSolver.Literal
+import mkn.mathlog.satSolver.getAllVars
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

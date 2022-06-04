@@ -2,13 +2,12 @@ package mkn.mathlog
 
 import com.github.ajalt.clikt.core.NoSuchParameter
 import com.github.ajalt.clikt.core.PrintHelpMessage
+import mkn.mathlog.satSolver.runSolver
 import mkn.mathlog.utils.CLArguments
 import mkn.mathlog.utils.DIMACSParser
 import mkn.mathlog.utils.FileInput
-import kotlin.system.measureTimeMillis
-import mkn.mathlog.satSolver.CDCLSolver
 import mkn.mathlog.utils.makeGreedyChoices
-import mkn.mathlog.satSolver.runSolver
+import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
     try {
@@ -46,20 +45,11 @@ fun main(args: Array<String>) {
 
         val initialFormula = parser.getFormula()
         val (formula, values) = makeGreedyChoices(initialFormula)
-        println(formula)
-        println(values)
-        if (!arguments.quiet) {
-            println(
-                formula.joinToString(" /\\ ") {
-                    "(" + it.joinToString(" \\/ ") {
-                        (if (it.hasNegation) "~" else "") + it.variableName.toString()
-                    } + ")"
-                } + "\n"
-            )
-        }
 
         val timeElapsed = measureTimeMillis {
-            val (sat, interp) = runSolver(formula, parser.getVariablesCount(), parser.getClausesCount())
+            val (sat, interp) = runSolver(
+                formula, parser.getVariablesCount(), parser.getClausesCount(), !arguments.quiet
+            )
 
             if (sat) {
                 println("satisfiable")
@@ -70,9 +60,11 @@ fun main(args: Array<String>) {
             if (sat) {
                 interp.forEachIndexed { index, info ->
                     val precalculatedValue = values[index]
-                    if (precalculatedValue != null) println("$index <- $precalculatedValue")
-                    else if (info != null) println("$index <- ${info.value}")
-                    else if (index > 0) println("$index <- true")
+                    when {
+                        precalculatedValue != null -> println("$index <- $precalculatedValue")
+                        info != null -> println("$index <- ${info.value}")
+                        index > 0 -> println("$index <- true")
+                    }
                 }
             }
         }
@@ -83,7 +75,6 @@ fun main(args: Array<String>) {
         }
 
     } catch (e: Exception) {
-        println(e::class.qualifiedName)
         println(e.message)
     }
 }

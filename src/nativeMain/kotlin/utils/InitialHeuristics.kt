@@ -1,6 +1,8 @@
 package mkn.mathlog.utils
 
-import mkn.mathlog.satSolver.*
+import mkn.mathlog.satSolver.Formula
+import mkn.mathlog.satSolver.Literal
+import mkn.mathlog.satSolver.VarNameType
 
 fun makeGreedyChoices(formula: Formula): Pair<Formula, MutableMap<VarNameType, Boolean>> {
     val formulaWithoutDuplicates = formula.map { it.distinct() }
@@ -8,9 +10,9 @@ fun makeGreedyChoices(formula: Formula): Pair<Formula, MutableMap<VarNameType, B
         clause.size == clause.distinctBy { it.variableName }.size
     }
     var currentFormula = formulaWithoutClausesWithOppositeLiterals
-    var precalculatedValues = mutableMapOf<VarNameType, Boolean>()
+    val precalculatedValues = mutableMapOf<VarNameType, Boolean>()
     while (true) {
-        var literals = currentFormula.flatten().toSet()
+        val literals = currentFormula.flatten().toSet()
         for (literal in literals) {
             val oppositeLiteral = Literal(literal.variableName, !literal.hasNegation)
             if (!literals.contains(oppositeLiteral)) {
