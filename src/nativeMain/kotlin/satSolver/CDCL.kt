@@ -174,7 +174,6 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
         clause.count { state[it.variableName]?.level == level } == 1
 
     object AnalyzeConflictWatcher {
-        var forceClassic = false
         var analyzesCount = 0
         var analyzesCountThreshold = 256
         var learntClausesCountThreshold = 512
@@ -188,9 +187,10 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
         }
     }
 
+    private var forceClassic = false
 
-    fun analyzeConflict(level: Int, conflictClauseID: Int, variablesCount: Int, clausesCount: Int): Pair<Int, Clause?> {
-        println("analyze on level $level")
+    fun analyzeConflict(level: Int, conflictClauseID: Int): Pair<Int, Clause?> {
+        //println("analyze on level $level")
 
         if (level == 0) {
             return Pair(-1, null)
@@ -200,7 +200,7 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
             withTimeoutOrNull(50L) {
                 var currentClause = f[conflictClauseID]
                 while (!oneLiteralAtLevel(currentClause, variablesInfo, level)) {
-                    if (!isActive && !AnalyzeConflictWatcher.forceClassic) {
+                    if (!isActive && !forceClassic) {
                         return@withTimeoutOrNull null
                     }
 
@@ -221,21 +221,21 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
             result = analyzeConflictWithMinCut(variablesCount, f, variablesInfo, level, conflictClauseID)
             if (result.second in f) {
                 result = result.first to null
-                AnalyzeConflictWatcher.forceClassic = true
+                forceClassic = true
             }
-            println("MinCut")
+            //println("MinCut")
         } else {
-            AnalyzeConflictWatcher.forceClassic = false
-            println("Classic")
+            forceClassic = false
+            //println("Classic")
         }
 
-        AnalyzeConflictWatcher.analyzesCount++
+        /*AnalyzeConflictWatcher.analyzesCount++
         if (AnalyzeConflictWatcher.analyzesCount == AnalyzeConflictWatcher.analyzesCountThreshold) {
             result = 0 to result.second
             AnalyzeConflictWatcher.analyzesCount = 0
             AnalyzeConflictWatcher.nextAnalyzesCountThreshold()
             println("=============================================================================")
-        }
+        }*/
 
         /*if (f.size - clausesCount >= AnalyzeConflictWatcher.learntClausesCountThreshold) {
             //result = 0 to result.second
@@ -284,21 +284,49 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
         }
     }
 
-    fun run(): Pair<Boolean, VariablesState> {
+    private fun shrinkAndShuffleFormula(hard: Boolean = false) {
+        val initFormula: Formula = mutableListOf()
+        val learntClauses: Formula = mutableListOf()
+
+        for (i in 0 until clausesCount) {
+            initFormula.add(f[i])
+        }
+        for (i in clausesCount until f.size) {
+            learntClauses.add(f[i])
+        }
+        f.clear()
+
+        initFormula.shuffle()
+        initFormula.map { it.shuffled() }
+        f += initFormula
+
+        f += if (hard) {
+            learntClauses.filter {
+                it.size <= 5
+            }.shuffled().map { it.shuffled() }
+        } else {
+            learntClauses.filter {
+                it.count { lit -> variablesInfo[lit.variableName] == null } <= 2
+            }.shuffled().map { it.shuffled() }
+        }
+    }
+
+    fun run(stepsCount: Long, hardReset: Boolean): Pair<Pair<Boolean, VariablesState>?, Formula?> {
         if (BCP(0) != null) {
-            return Pair(false, arrayOfNulls<VariableInfo?>(variablesCount + 1))
+            return Pair(false, arrayOfNulls<VariableInfo?>(variablesCount + 1)) to null
         }
 
         val distinctVarsCount = f.flatten().map { it.variableName }.distinct().size
         var level = 0
+        var steps = 0L
         while (assignedVariablesCount < distinctVarsCount) {
             level++
             decideNewValue(level)
-            while (true) {
+            while (steps < stepsCount) {
                 val conflictClauseID: Int = BCP(level) ?: break
-                val (backLevel, learntClause) = analyzeConflict(level, conflictClauseID, variablesCount, clausesCount)
+                val (backLevel, learntClause) = analyzeConflict(level, conflictClauseID)
                 if (backLevel < 0) {
-                    return Pair(false, arrayOfNulls<VariableInfo?>(variablesCount + 1))
+                    return Pair(false, arrayOfNulls<VariableInfo?>(variablesCount + 1)) to null
                 } else {
                     goBack(backLevel)
                     level = backLevel
@@ -306,8 +334,43 @@ class CDCLSolver(formula: Formula, val variablesCount: Int, val clausesCount: In
                         addClause(learntClause)
                     }
                 }
+                steps++
             }
         }
-        return Pair(true, variablesInfo)
+
+        return if (steps < stepsCount) {
+            Pair(true, variablesInfo) to null
+        } else {
+            shrinkAndShuffleFormula(hardReset)
+            null to f
+        }
     }
+}
+
+fun runSolver(formula: Formula, variablesCount: Int, clausesCount: Int): Pair<Boolean, VariablesState> {
+    var stepsCount = 256L
+    var hardResetStepsCount = 8L
+    var solver = CDCLSolver(formula, variablesCount, clausesCount)
+
+    var (result, f) = solver.run(stepsCount, false)
+    var curTries = 0L
+    while (result == null) {
+        println("==========================================================================================")
+        println("new formula with ${f?.size} clauses")
+
+        curTries++
+        solver = CDCLSolver(f ?: error("Formula is null"), variablesCount, clausesCount)
+        val newResult = solver.run(stepsCount, curTries == hardResetStepsCount)
+        if (curTries == hardResetStepsCount) {
+            curTries = 0
+            hardResetStepsCount = floor(hardResetStepsCount * 1.4142).toLong()
+        }
+
+        stepsCount = floor(stepsCount * 1.24).toLong()
+
+        result = newResult.first
+        f = newResult.second
+    }
+
+    return result
 }
