@@ -7,6 +7,7 @@ import mkn.mathlog.utils.DIMACSParser
 import mkn.mathlog.utils.FileInput
 import kotlin.system.measureTimeMillis
 import mkn.mathlog.satSolver.CDCLSolver
+import mkn.mathlog.utils.makeGreedyChoices
 
 fun main(args: Array<String>) {
     try {
@@ -42,7 +43,10 @@ fun main(args: Array<String>) {
         val parser = DIMACSParser()
         parser.parseText(inputText)
 
-        val formula = parser.getFormula()
+        val initialFormula = parser.getFormula()
+        val (formula, values) = makeGreedyChoices(initialFormula)
+        println(formula)
+        println(values)
         if (!arguments.quiet) {
             println(
                 formula.joinToString(" /\\ ") {
@@ -63,7 +67,10 @@ fun main(args: Array<String>) {
 
             if (sat) {
                 interp.forEachIndexed { index, info ->
-                    if (info != null) println("$index <- ${info.value}")
+                    val precalculatedValue = values.get(index)
+                    if (precalculatedValue != null) println("$index <- $precalculatedValue")
+                    else if (info != null) println("$index <- ${info.value}")
+                    else if (index > 0) println("$index <- true")
                 }
             }
         }
