@@ -31,7 +31,10 @@ class TestParser {
             listOf(Literal(1, true), Literal(3, false), Literal(2, false)),
         )
 
-        assertEquals(formula, DIMACSParser.getFormula(input))
+        val parser = DIMACSParser()
+        parser.parseText(input)
+
+        assertEquals(formula, parser.getFormula())
     }
 
     @Test
@@ -75,7 +78,10 @@ class TestParser {
             listOf(Literal(1, true), Literal(2, true), Literal(3, true)),
         )
 
-        assertEquals(formula, DIMACSParser.getFormula(input))
+        val parser = DIMACSParser()
+        parser.parseText(input)
+
+        assertEquals(formula, parser.getFormula())
     }
 
     @Test
@@ -105,7 +111,10 @@ class TestParser {
             listOf(Literal(1, true), Literal(3, false), Literal(2, false)),
         )
 
-        assertEquals(formula, DIMACSParser.getFormula(input))
+        val parser = DIMACSParser()
+        parser.parseText(input)
+
+        assertEquals(formula, parser.getFormula())
     }
 
     @Test
@@ -115,7 +124,10 @@ class TestParser {
             c another comment
         """.trimIndent()
 
-        assertEquals(mutableListOf(), DIMACSParser.getFormula(input))
+        val parser = DIMACSParser()
+        parser.parseText(input)
+
+        assertEquals(mutableListOf(), parser.getFormula())
     }
 
     @Test
@@ -127,8 +139,9 @@ class TestParser {
             p cnf 3 2
         """.trimIndent()
 
-        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
-            DIMACSParser.getFormula(input)
+        val parser = DIMACSParser()
+        assertFailsWith(DIMACSParser.DIMACSException::class) {
+            parser.parseText(input)
         }
     }
 
@@ -139,8 +152,9 @@ class TestParser {
             sdfsfsdfsd
         """.trimIndent()
 
-        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
-            DIMACSParser.getFormula(input)
+        val parser = DIMACSParser()
+        assertFailsWith(DIMACSParser.DIMACSException::class) {
+            parser.parseText(input)
         }
     }
 
@@ -152,8 +166,9 @@ class TestParser {
             -1 -2
         """.trimIndent()
 
-        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
-            DIMACSParser.getFormula(input)
+        val parser = DIMACSParser()
+        assertFailsWith(DIMACSParser.DIMACSException::class) {
+            parser.parseText(input)
         }
     }
 
@@ -163,8 +178,9 @@ class TestParser {
             p cnf -1 2
         """.trimIndent()
 
-        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
-            DIMACSParser.getFormula(input)
+        val parser = DIMACSParser()
+        assertFailsWith(DIMACSParser.DIMACSException::class) {
+            parser.parseText(input)
         }
     }
 
@@ -174,8 +190,9 @@ class TestParser {
             p cnf 2 -1
         """.trimIndent()
 
-        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
-            DIMACSParser.getFormula(input)
+        val parser = DIMACSParser()
+        assertFailsWith(DIMACSParser.DIMACSException::class) {
+            parser.parseText(input)
         }
     }
 
@@ -197,8 +214,9 @@ class TestParser {
             c c    cc
         """.trimIndent()
 
-        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
-            DIMACSParser.getFormula(input)
+        val parser = DIMACSParser()
+        assertFailsWith(DIMACSParser.DIMACSException::class) {
+            parser.parseText(input)
         }
     }
 
@@ -210,8 +228,9 @@ class TestParser {
             1 kek 2
         """.trimIndent()
 
-        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
-            DIMACSParser.getFormula(input)
+        val parser = DIMACSParser()
+        assertFailsWith(DIMACSParser.DIMACSException::class) {
+            parser.parseText(input)
         }
     }
 
@@ -223,8 +242,9 @@ class TestParser {
             -1 -2 -3
         """.trimIndent()
 
-        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
-            DIMACSParser.getFormula(input)
+        val parser = DIMACSParser()
+        assertFailsWith(DIMACSParser.DIMACSException::class) {
+            parser.parseText(input)
         }
     }
 
@@ -241,7 +261,10 @@ class TestParser {
             listOf(Literal(1, true), Literal(2, true), Literal(3, true)),
         )
 
-        assertEquals(formula, DIMACSParser.getFormula(input))
+        val parser = DIMACSParser()
+        parser.parseText(input)
+
+        assertEquals(formula, parser.getFormula())
     }
 
     @Test
@@ -252,8 +275,9 @@ class TestParser {
             -1 -2 -3
         """.trimIndent()
 
-        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
-            DIMACSParser.getFormula(input)
+        val parser = DIMACSParser()
+        assertFailsWith(DIMACSParser.DIMACSException::class) {
+            parser.parseText(input)
         }
     }
 
@@ -265,8 +289,9 @@ class TestParser {
             -1 -2 -3
         """.trimIndent()
 
-        assertFailsWith(DIMACSParser.Companion.DIMACSException::class) {
-            DIMACSParser.getFormula(input)
+        val parser = DIMACSParser()
+        assertFailsWith(DIMACSParser.DIMACSException::class) {
+            parser.parseText(input)
         }
     }
 }
