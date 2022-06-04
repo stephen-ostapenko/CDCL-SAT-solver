@@ -8,6 +8,7 @@ import mkn.mathlog.utils.FileInput
 import kotlin.system.measureTimeMillis
 import mkn.mathlog.satSolver.CDCLSolver
 import mkn.mathlog.utils.makeGreedyChoices
+import mkn.mathlog.satSolver.runSolver
 
 fun main(args: Array<String>) {
     try {
@@ -58,7 +59,8 @@ fun main(args: Array<String>) {
         }
 
         val timeElapsed = measureTimeMillis {
-            val (sat, interp) = CDCLSolver(formula, parser.getVariablesCount(), parser.getClausesCount()).run()
+            val (sat, interp) = runSolver(formula, parser.getVariablesCount(), parser.getClausesCount())
+
             if (sat) {
                 println("satisfiable")
             } else {
@@ -67,7 +69,7 @@ fun main(args: Array<String>) {
 
             if (sat) {
                 interp.forEachIndexed { index, info ->
-                    val precalculatedValue = values.get(index)
+                    val precalculatedValue = values[index]
                     if (precalculatedValue != null) println("$index <- $precalculatedValue")
                     else if (info != null) println("$index <- ${info.value}")
                     else if (index > 0) println("$index <- true")
