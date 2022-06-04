@@ -82,7 +82,7 @@ def run_test_suite(test_suite_prefix, fail_after_first_error):
 	passed = 0
 	for i in range(len(tests)):
 		print("[ RUN      ]", f"Test #{tests[i]}")
-		subprocess.check_call(f"../build/bin/native/sat-solverDebugExecutable/sat-solver.kexe -q -i {test_suite_prefix}-data/{tests[i]} > {TMP_FILE}", shell =  True)
+		subprocess.check_call(f"../build/bin/native/sat-solverReleaseExecutable/sat-solver.kexe -q -i {test_suite_prefix}-data/{tests[i]} > {TMP_FILE}", shell =  True)
 
 		print("[   CHECK  ]", f"Test #{tests[i]}")
 		sat, interp = get_result()
@@ -105,7 +105,7 @@ def run_test_suite(test_suite_prefix, fail_after_first_error):
 			print("[       OK ]", f"Test #{tests[i]}")
 			passed += 1
 
-	print(f"[==========] Passed {passed}/{len(tests)} tests from suite \"{test_suite_prefix}\"")
+	print(f"[==========] Passed {passed}/{len(tests)} tests from suite \"{test_suite_prefix}\"\n")
 
 if __name__ == "__main__":
 	args = sys.argv
@@ -114,11 +114,16 @@ if __name__ == "__main__":
 
 	print("Building:")
 	os.chdir("..")
-	subprocess.check_call("./gradlew linkSat-solverDebugExecutableNative", shell = True)
+	subprocess.check_call("./gradlew linkSat-solverReleaseExecutableNative", shell = True)
 	os.chdir("integrationTests")
 	print()
 
-	run_test_suite("small", len(args) >= 2 and args[1] == "--fail")
+	fail_after_first_error = len(args) >= 2 and args[1] == "--fail"
+
+	run_test_suite("small", fail_after_first_error)
+	run_test_suite("light", fail_after_first_error)
+	run_test_suite("heavy", fail_after_first_error)
+	run_test_suite("ultra-heavy", fail_after_first_error)
 
 	if os.path.exists(TMP_FILE):
 		os.remove(TMP_FILE)
