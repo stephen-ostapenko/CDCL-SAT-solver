@@ -136,6 +136,10 @@ fun findFlowDinic(nVertex: Int, source: Int, drain: Int, gr: Graph, edgeList: Ed
     val dist = Array(nVertex) { 0 }
 
     for (iter in 30 downTo 0) {
+        if (1 shl iter > nVertex) {
+            continue
+        }
+
         while (true) {
             val flow = bfsDinic(source, drain, 1 shl iter, gr, edgeList, used, edgePtr, dist)
             if (flow == 0) {

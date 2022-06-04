@@ -2,11 +2,11 @@ package mkn.mathlog
 
 import com.github.ajalt.clikt.core.NoSuchParameter
 import com.github.ajalt.clikt.core.PrintHelpMessage
+import mkn.mathlog.satSolver.makeGreedyChoices
 import mkn.mathlog.satSolver.runSolver
 import mkn.mathlog.utils.CLArguments
 import mkn.mathlog.utils.DIMACSParser
 import mkn.mathlog.utils.FileInput
-import mkn.mathlog.satSolver.makeGreedyChoices
 import mkn.mathlog.utils.FileOutput
 import kotlin.system.measureTimeMillis
 
@@ -74,6 +74,7 @@ fun main(args: Array<String>) {
         if (outputFilePath != null) {
             FileOutput(outputFilePath).writeAllLines(outputLines)
         } else {
+            println()
             outputLines.forEach {
                 println(it)
             }
