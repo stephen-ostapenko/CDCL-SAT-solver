@@ -17,7 +17,7 @@ def get_answer(test_suite_prefix):
 
 def get_result():
 	fi = open(TMP_FILE, "r")
-	lines = fi.readlines()
+	lines = fi.readlines()[1:]
 	lines = [line.rstrip() for line in lines]
 	fi.close()
 	
