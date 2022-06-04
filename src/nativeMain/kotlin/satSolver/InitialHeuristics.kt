@@ -1,8 +1,4 @@
-package mkn.mathlog.utils
-
-import mkn.mathlog.satSolver.Formula
-import mkn.mathlog.satSolver.Literal
-import mkn.mathlog.satSolver.VarNameType
+package mkn.mathlog.satSolver
 
 fun makeGreedyChoices(formula: Formula): Pair<Formula, MutableMap<VarNameType, Boolean>> {
     val formulaWithoutDuplicates = formula.map { it.distinct() }

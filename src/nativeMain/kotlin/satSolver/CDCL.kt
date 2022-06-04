@@ -323,7 +323,7 @@ fun runSolver(formula: Formula, variablesCount: Int, clausesCount: Int, verbose:
     var curTries = 0L
     while (result == null) {
         if (verbose) {
-            println("solving new formula with ${f?.size} clauses")
+            println("solving formula with ${f?.size} clauses")
         }
 
         curTries++

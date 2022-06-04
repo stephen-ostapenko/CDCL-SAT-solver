@@ -8,6 +8,7 @@ class CLArguments : CliktCommand() {
     override fun run() = Unit
 
     val inputFile: String? by option("-i", "--input", help = "Path to DIMACS input file")
+    val outputFile: String? by option("-o", "--output", help = "Path to output file for results")
     val quiet: Boolean by option("-q", "--quiet").flag()
     val time: Boolean by option("-t", "--time").flag()
 }

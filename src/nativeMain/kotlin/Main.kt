@@ -6,7 +6,8 @@ import mkn.mathlog.satSolver.runSolver
 import mkn.mathlog.utils.CLArguments
 import mkn.mathlog.utils.DIMACSParser
 import mkn.mathlog.utils.FileInput
-import mkn.mathlog.utils.makeGreedyChoices
+import mkn.mathlog.satSolver.makeGreedyChoices
+import mkn.mathlog.utils.FileOutput
 import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
@@ -25,7 +26,6 @@ fun main(args: Array<String>) {
         }
 
         val inputFilePath = arguments.inputFile
-
         val inputText = if (inputFilePath != null) {
             FileInput(inputFilePath).readAllText()
         } else {
@@ -46,26 +46,36 @@ fun main(args: Array<String>) {
         val initialFormula = parser.getFormula()
         val (formula, values) = makeGreedyChoices(initialFormula)
 
+        val outputLines = mutableListOf<String>()
         val timeElapsed = measureTimeMillis {
             val (sat, interp) = runSolver(
                 formula, parser.getVariablesCount(), parser.getClausesCount(), !arguments.quiet
             )
 
             if (sat) {
-                println("satisfiable")
+                outputLines.add("satisfiable")
             } else {
-                println("unsatisfiable")
+                outputLines.add("unsatisfiable")
             }
 
             if (sat) {
                 interp.forEachIndexed { index, info ->
                     val precalculatedValue = values[index]
                     when {
-                        precalculatedValue != null -> println("$index <- $precalculatedValue")
-                        info != null -> println("$index <- ${info.value}")
-                        index > 0 -> println("$index <- true")
+                        precalculatedValue != null -> outputLines.add("$index <- $precalculatedValue")
+                        info != null -> outputLines.add("$index <- ${info.value}")
+                        index > 0 -> outputLines.add("$index <- true")
                     }
                 }
+            }
+        }
+
+        val outputFilePath = arguments.outputFile
+        if (outputFilePath != null) {
+            FileOutput(outputFilePath).writeAllLines(outputLines)
+        } else {
+            outputLines.forEach {
+                println(it)
             }
         }
 
